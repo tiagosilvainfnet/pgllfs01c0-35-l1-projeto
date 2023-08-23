@@ -7,7 +7,12 @@ import { Task, User } from './models';
 import { generateResource } from './utils/modeling-model';
 import { encryptPassword } from './utils/user-utils';
 import { sequelize } from './db';
+import bcrypt from "bcrypt";
+import hbs from 'hbs';
+import Mail from './utils/Mail';
+import dashboard from './routes/dashboard';
 
+const path = require('node:path');
 const mysqlStore = require('express-mysql-session')(session);
 require('dotenv').config();
 
@@ -16,7 +21,11 @@ AdminJS.registerAdapter({
   Database: AdminJSSequelize.Database,
 });
 
+const bodyParser = require('body-parser');
 const PORT = 3000
+const ROOT_DIR = __dirname;
+
+const email = new Mail(ROOT_DIR);
 
 const start = async () => {
   const app = express()
@@ -38,12 +47,20 @@ const start = async () => {
       }, {
         new: {
           before: async (request: any) => {
+            await email.sendEmail(request.payload.email, 'Bem vindo ao meu gestor de tarefas', 'password-send', { text: "seja, bem-vindo ao sistema, sua senha é:", name: request.payload.name, password: request.payload.password });
+
             return encryptPassword(request);
           }
         },
         edit: {
-          before: async (request: any) => {
-            return encryptPassword(request);
+          before: async (request: any, context: any) => {
+            if (request.method !== 'post') return request
+
+            if(request.payload.password !== context.record.params.password){
+              await email.sendEmail(request.payload.email, 'Alteração de senha', 'password-send', { text: "sua senha sofreu alteração e agora ela é:", name: request.payload.name, password: request.payload.password });
+              return encryptPassword(request);
+            }
+            return request
           }
         },
       }),
@@ -75,11 +92,14 @@ const start = async () => {
   const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
     admin,
     {
-      authenticate: async (email: string) => {
+      authenticate: async (email: string, password: string) => {
         const user = await User.findOne({ where: { email } });
-
         if (user) {
-          return user;
+          const verifica = await bcrypt.compare(password, user.getDataValue('password'));
+          if(verifica){
+            return user;
+          }
+          return false;
         }
         return false;
       },
@@ -99,7 +119,11 @@ const start = async () => {
       name: cookieName
     }
   )
+  hbs.registerPartials(path.join(ROOT_DIR, 'views'));
+  app.set('view engine', '.hbs');
   app.use(admin.options.rootPath, adminRouter)
+  app.use(bodyParser.urlencoded({ extended: true }));
+  app.use('/dashboard', dashboard);
 
   app.listen(PORT, () => {
     console.log(`AdminJS started on http://localhost:${PORT}`)
