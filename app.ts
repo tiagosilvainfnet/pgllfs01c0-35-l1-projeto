@@ -68,7 +68,7 @@ const start = async () => {
     ],
     rootPath: '/admin',
     dashboard: {
-      component: AdminJS.bundle('./components/dashboard.tsx')
+      component: AdminJS.bundle('./components/dashboard.jsx')
     },
     branding: {
       favicon: "https://t4.ftcdn.net/jpg/05/06/81/59/360_F_506815935_cvsf1tKw8WuPeHpHSm2efPbbH08Tw8nN.png",
