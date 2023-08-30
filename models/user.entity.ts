@@ -7,6 +7,7 @@ interface IUser{
     email: string;
     username: string;
     password: string;
+    active: boolean;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -19,6 +20,7 @@ export class User extends Model<IUser, UserCreationAttributes> {
     declare email: string | null;
     declare username: string | null;
     declare password: string | null;
+    declare active: boolean | null;
     declare createdAt: Date | null;
     declare updatedAt: Date | null;
 }
@@ -47,6 +49,11 @@ User.init(
         password: {
             type: new DataTypes.STRING(256),
             allowNull: false
+        },
+        active: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: true
         },
         createdAt: {
             type: new DataTypes.DATE,

@@ -20,6 +20,7 @@
     "express-session": "^1.17.3",
     "faker": "^5.5.3",
     "hbs": "4.2.0",
+    "moment": "^2.29.4",
     "mysql2": "^3.6.0",
     "nodemailer": "6.8.0",
     "nodemailer-express-handlebars": "5.0.0",
@@ -35,6 +36,7 @@
     "@types/express": "^4.17.17",
     "@types/express-session": "^1.17.7",
     "@types/faker": "^6.6.9",
-    "@types/hbs": "^4.0.1"
+    "@types/hbs": "^4.0.1",
+    "ts-node-dev": "^2.0.0"
   }
 }

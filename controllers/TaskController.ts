@@ -2,6 +2,9 @@ import { Task } from "../models/task.entity";
 import { getLast12Months } from "../utils/date";
 import { Op } from "sequelize";
 import { sequelize } from "../db";
+import moment from "moment";
+require('moment/locale/pt-br');
+moment.locale('pt-br');
 
 export default class TaskController{
     async getData(){
@@ -25,9 +28,75 @@ export default class TaskController{
                     backgroundColor: 'rgba(54, 162, 235, 0.5)',
                   },
                 ],
-              }
+            }
         }
     }
+
+    async getWeekDays(){
+        const hoje = moment()
+
+        var diasDaSemana: any = [];
+        var data_active: any = [];
+        var data_inactive: any = [];
+
+        for(let i = 0; i < 7; i++){
+            const date = moment(hoje).subtract(i, 'days');
+            const dayWeek = date.format('dddd');
+            diasDaSemana.push(dayWeek);
+
+            const r_active = await this.getTotalDay(date.format('YYYY-MM-DD'), 1)
+            const r_inactive = await this.getTotalDay(date.format('YYYY-MM-DD'), 0)
+            data_active.push(r_active)
+            data_inactive.push(r_inactive)
+        }
+
+        data_active.reverse()
+        data_inactive.reverse()
+        diasDaSemana.reverse()
+
+        return [diasDaSemana, data_active, data_inactive];
+    }
+
+    async getTotalDay(day: string, status: any){
+        return await Task.count({
+            where: {
+                createdAt: {
+                    [Op.and]: [
+                        sequelize.literal(`createdAt >= '${day} 00:00:00'`),
+                        sequelize.literal(`createdAt <= '${day} 23:59:59'`),
+                    ]
+                },
+                status: status
+            }
+        });
+    }
+
+    async getDataMonth(month: any){
+        const result = await this.getWeekDays();
+        console.log(result)
+
+        return  {
+            labels: result[0],
+            data: {
+                labels: result[0],
+                datasets: [
+                  {
+                    label: 'Tarefas Feitas',
+                    data: result[1],
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                  },
+                  {
+                    label: 'Tarefas em aberto',
+                    data: result[2],
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                  },
+                ],
+            }
+        }
+    }
+
     async getTotalByMonth(months: any[], status: any){
         const tasks: Number[] = []
 

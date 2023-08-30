@@ -2,7 +2,7 @@
   "development": {
     "username": "root",
     "password": "12345678",
-    "database": "pgllfs01c035l1projeto",
+    "database": "pgllfs01c0",
     "host": "127.0.0.1",
     "dialect": "mysql"
   },
