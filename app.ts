@@ -1,8 +1,12 @@
-import AdminJS from 'adminjs'
+// @ts-nocheck
+import AdminJS, { useCurrentAdmin } from 'adminjs'
 import AdminJSExpress from '@adminjs/express'
 import express from 'express'
 import session from 'express-session';
 import * as AdminJSSequelize from '@adminjs/sequelize'
+import * as AdminJSMongoose from '@adminjs/mongoose'
+import { SocketDataChat } from './interfaces/SocketInterface';
+
 import { Task, User } from './models';
 import { generateResource } from './utils/modeling-model';
 import { encryptPassword } from './utils/user-utils';
@@ -11,6 +15,11 @@ import bcrypt from "bcrypt";
 import hbs from 'hbs';
 import Mail from './utils/Mail';
 import dashboard from './routes/dashboard';
+import chat from './routes/chat';
+import http from 'http';
+import { Server } from "socket.io";
+import ChatController from './controllers/ChatController';
+import user from './routes/user';
 
 const path = require('node:path');
 const mysqlStore = require('express-mysql-session')(session);
@@ -21,14 +30,23 @@ AdminJS.registerAdapter({
   Database: AdminJSSequelize.Database,
 });
 
+AdminJS.registerAdapter({
+  Resource: AdminJSMongoose.Resource, 
+  Database: AdminJSMongoose.Database
+});
+
 const bodyParser = require('body-parser');
 const PORT = 3000
 const ROOT_DIR = __dirname;
+const chatCtrl = new ChatController();
 
 const email = new Mail(ROOT_DIR);
 
 const start = async () => {
   const app = express()
+  const server = http.createServer(app);
+  const io = new Server<SocketDataChat>(server);
+
   sequelize.sync().then((result) => {
     console.log(result);
   }).catch((err) => {
@@ -68,7 +86,7 @@ const start = async () => {
     ],
     rootPath: '/admin',
     dashboard: {
-      component: AdminJS.bundle('./components/dashboard.jsx')
+      component: AdminJS.bundle('./components/dashboard.jsx'),
     },
     branding: {
       favicon: "https://t4.ftcdn.net/jpg/05/06/81/59/360_F_506815935_cvsf1tKw8WuPeHpHSm2efPbbH08Tw8nN.png",
@@ -124,10 +142,28 @@ const start = async () => {
   app.use(admin.options.rootPath, adminRouter)
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use('/dashboard', dashboard);
+  app.use('/chat', chat);
+  app.use('/user', user);
 
-  app.listen(PORT, () => {
+  io.on('connection', (socket) => {
+    console.log("Usuário se conectou.")
+
+    socket.on('SEND_MESSAGE', (data) => {
+      const { message, user_consumer, user_receptor } = data;
+      chatCtrl.sendMessage(message, user_consumer, user_receptor)
+
+      io.emit('RECEIVE_MESSAGE', data)
+    })
+    socket.on("disconnect", (reason) => {
+      console.log("Desconectou")
+    });
+  })
+
+  server.listen(PORT, () => {
     console.log(`AdminJS started on http://localhost:${PORT}`)
   })
+
+  
 }
 
 start()
