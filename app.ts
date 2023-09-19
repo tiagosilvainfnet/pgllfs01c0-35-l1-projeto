@@ -11,6 +11,8 @@ import bcrypt from "bcrypt";
 import hbs from 'hbs';
 import Mail from './utils/Mail';
 import dashboard from './routes/dashboard';
+import home from './routes/home';
+import auth from './routes/auth';
 
 const path = require('node:path');
 const mysqlStore = require('express-mysql-session')(session);
@@ -121,9 +123,13 @@ const start = async () => {
   )
   hbs.registerPartials(path.join(ROOT_DIR, 'views'));
   app.set('view engine', '.hbs');
+  app.use(express.static('public'));
   app.use(admin.options.rootPath, adminRouter)
+  app.use(express.json())
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use('/dashboard', dashboard);
+  app.use('/', auth);
+  app.use('/', home);
 
   app.listen(PORT, () => {
     console.log(`AdminJS started on http://localhost:${PORT}`)
