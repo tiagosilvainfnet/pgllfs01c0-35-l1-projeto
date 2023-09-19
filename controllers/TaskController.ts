@@ -73,7 +73,6 @@ export default class TaskController{
 
     async getDataMonth(month: any){
         const result = await this.getWeekDays();
-        console.log(result)
 
         return  {
             labels: result[0],
