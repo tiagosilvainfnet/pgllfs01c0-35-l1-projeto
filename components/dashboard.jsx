@@ -68,19 +68,10 @@ const Dashboard = () => {
   }
 
   useEffect(() => {
-    socket.on("RECEIVE_MESSAGE", (data) => {
-      console.log(data)
-    });
-
     loadUser();
   }, []);
 
   const sendMessage = async () => {
-    await socket.emit("SEND_MESSAGE", {
-      'user_consumer': 1,
-      'user_receptor': 2,
-      message
-    });
     setMessage('');
   }
 
@@ -91,14 +82,6 @@ const Dashboard = () => {
         width: '50%'
       }}
     >{ monthTasks ? <Radar options={optionMonth} data={monthTasks.data} /> : "Nada para carregar" }</div>
-
-    <input
-      value={message}
-      onChange={(e) => setMessage(e.target.value)}
-    />
-    <button onClick={async () => {
-      await sendMessage();
-    }}>Enviar</button>
   </>
 }
 

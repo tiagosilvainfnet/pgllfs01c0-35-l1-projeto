@@ -7,7 +7,7 @@ import * as AdminJSSequelize from '@adminjs/sequelize'
 import * as AdminJSMongoose from '@adminjs/mongoose'
 import { SocketDataChat } from './interfaces/SocketInterface';
 
-import { Task, User } from './models';
+import { Task, User, Friend } from './models';
 import { generateResource } from './utils/modeling-model';
 import { encryptPassword } from './utils/user-utils';
 import { sequelize } from './db';
@@ -21,6 +21,7 @@ import chat from './routes/chat';
 import http from 'http';
 import { Server } from "socket.io";
 import ChatController from './controllers/ChatController';
+import { Chat } from './models/chat.entity';
 
 const path = require('node:path');
 const mysqlStore = require('express-mysql-session')(session);
@@ -83,7 +84,9 @@ const start = async () => {
           }
         },
       }),
-      generateResource(Task)
+      generateResource(Task),
+      generateResource(Chat),
+      generateResource(Friend),
     ],
     rootPath: '/admin',
     dashboard: {

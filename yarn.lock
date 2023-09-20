@@ -3929,10 +3929,10 @@
   optionalDependencies:
     "@mongodb-js/saslprep" "^1.1.0"
 
-"mongoose@^7.5.0", "mongoose@>=5":
-  "integrity" "sha512-FpOWOb0AJuaVcplmEyIJ2eCbVGe4gOoniPD+pmft5BrGrNrsFcnYXlERdXtBApGHMHPwD7WbxTyhCbUNr72F3Q=="
-  "resolved" "https://registry.npmjs.org/mongoose/-/mongoose-7.5.0.tgz"
-  "version" "7.5.0"
+"mongoose@^7.5.2", "mongoose@>=5":
+  "integrity" "sha512-yEkmI1jfiog7QUvMWz3eB/XoA3/5DrVvSz+z3V5hnq8VtZIHC7ujEV0RKzRXwr8QNMOs+OTB7+aK7R/N/V3yXA=="
+  "resolved" "https://registry.npmjs.org/mongoose/-/mongoose-7.5.2.tgz"
+  "version" "7.5.2"
   dependencies:
     "bson" "^5.4.0"
     "kareem" "2.5.1"

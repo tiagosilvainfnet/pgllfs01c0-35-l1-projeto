@@ -15,13 +15,16 @@ auth.post('/login', async (req, res) => {
     if (user) {
         const verifica = await bcrypt.compare(password, user.getDataValue('password'));
         if(verifica){
+            const { email, username, id, active } = user;
+
             res.status(200)
-            // res.send(user)
-        }
-        res.status(405)
+            res.send({
+                email, username, id, active
+            })
+        }   
+        return res.status(500)
     }
-    res.status(405)
-    
+    return res.status(500)
 });
 
 
