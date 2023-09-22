@@ -1,7 +1,7 @@
 import { model, Schema } from 'mongoose';
 
 export interface IChat {
-    user_consumer: number;
+    user_sender: number;
     user_receptor: number;
     message: string;
     created_at: Date;
@@ -9,7 +9,7 @@ export interface IChat {
 
 export const ChatSchema = new Schema<IChat>(
     {
-        user_consumer: { type: 'number', required: true },
+        user_sender: { type: 'number', required: true },
         user_receptor: { type: 'number', required: true },
         message: { type: String, required: true },
         created_at: { type: Date, default: Date.now }

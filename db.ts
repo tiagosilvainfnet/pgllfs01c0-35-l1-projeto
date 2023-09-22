@@ -7,7 +7,9 @@ const sequelize = new Sequelize(`mysql://${process.env.DB_USER}:${process.env.DB
     dialect: 'mysql',
 });
 
-mongoose.connect(`mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}/${process.env.MONGO_DB}`)
+mongoose.connect(`mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}/${process.env.MONGO_DB}`, {
+    family: 4,
+})
 const mongoDb = mongoose.connection;
 
 export  {

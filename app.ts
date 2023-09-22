@@ -22,6 +22,7 @@ import http from 'http';
 import { Server } from "socket.io";
 import ChatController from './controllers/ChatController';
 import { Chat } from './models/chat.entity';
+import friends from './routes/friends';
 
 const path = require('node:path');
 const mysqlStore = require('express-mysql-session')(session);
@@ -151,14 +152,14 @@ const start = async () => {
   app.use('/', auth);
   app.use('/', home);
   app.use('/chat', chat);
+  app.use('/friends', friends);
 
   io.on('connection', (socket) => {
     console.log("Usuário se conectou.")
 
     socket.on('SEND_MESSAGE', (data) => {
-      const { message, user_consumer, user_receptor } = data;
-      chatCtrl.sendMessage(message, user_consumer, user_receptor)
-
+      const { message, user_sender, user_receptor } = data;
+      chatCtrl.sendMessage(message, user_sender, user_receptor)
       io.emit('RECEIVE_MESSAGE', data)
     })
     socket.on("disconnect", (reason) => {
