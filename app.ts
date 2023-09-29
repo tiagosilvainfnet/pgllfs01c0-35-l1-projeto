@@ -162,6 +162,22 @@ const start = async () => {
       chatCtrl.sendMessage(message, user_sender, user_receptor)
       io.emit('RECEIVE_MESSAGE', data)
     })
+
+    socket.on('SEND_NOTIFICATION', (data) => {
+      io.emit('RECEIVE_NOTIFICATION', {
+        user_sender: data.user_id,
+        user_receptor: data.friend_id,
+        type: data.type
+      })
+    })
+
+    socket.on('SEND_UPDATE_CHAT', (data) => {
+      io.emit('RECEIVE_UPDATE_CHAT', {
+        user_sender: data.user_id,
+        user_receptor: data.friend_id,
+      })
+    })
+
     socket.on("disconnect", (reason) => {
       console.log("Desconectou")
     });

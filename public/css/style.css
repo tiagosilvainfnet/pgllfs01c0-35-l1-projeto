@@ -218,3 +218,22 @@ body {
   display: none;
 }
 
+form#search-form{
+  position: relative;
+}
+
+#datalistOptions{
+  position: absolute;
+  left: 0;
+  top: 50px;
+  list-style: none;
+  padding-left: 0;
+  width: 100%;
+}
+
+#datalistOptions li{
+  padding: 5px;
+  border: 1px solid #333;
+  width: 100%;
+  cursor: pointer;
+}
