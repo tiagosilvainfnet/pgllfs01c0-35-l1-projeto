@@ -237,3 +237,8 @@ form#search-form{
   width: 100%;
   cursor: pointer;
 }
+
+#postagens{
+  overflow: auto;
+  max-height: calc(100vh - 280px);
+}

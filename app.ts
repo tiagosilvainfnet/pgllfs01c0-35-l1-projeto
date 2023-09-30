@@ -21,8 +21,16 @@ import chat from './routes/chat';
 import http from 'http';
 import { Server } from "socket.io";
 import ChatController from './controllers/ChatController';
-import { Chat } from './models/chat.entity';
 import friends from './routes/friends';
+import NotificationController from './controllers/NotificationController';
+
+import { Chat } from './models/chat.entity';
+import { Notification } from './models/notification.entity';
+import { Post } from './models/post.entity';
+import PostController from './controllers/PostController';
+
+const notificatioCtrl = new NotificationController();
+const postCtrl = new PostController();
 
 const path = require('node:path');
 const mysqlStore = require('express-mysql-session')(session);
@@ -88,6 +96,8 @@ const start = async () => {
       generateResource(Task),
       generateResource(Chat),
       generateResource(Friend),
+      generateResource(Notification),
+      generateResource(Post),
     ],
     rootPath: '/admin',
     dashboard: {
@@ -160,14 +170,31 @@ const start = async () => {
     socket.on('SEND_MESSAGE', (data) => {
       const { message, user_sender, user_receptor } = data;
       chatCtrl.sendMessage(message, user_sender, user_receptor)
+      notificatioCtrl.saveNotification('chat', user_sender, user_receptor);
+
       io.emit('RECEIVE_MESSAGE', data)
+      io.emit('RECEIVE_NOTIFICATION', {
+        user_sender: user_sender,
+        user_receptor: user_receptor,
+        type: 'chat'
+      })
     })
 
     socket.on('SEND_NOTIFICATION', (data) => {
+      notificatioCtrl.saveNotification(data.type, data.user_id, data.friend_id);
+
       io.emit('RECEIVE_NOTIFICATION', {
         user_sender: data.user_id,
         user_receptor: data.friend_id,
         type: data.type
+      })
+    })
+
+    socket.on('SEND_POST', (data) => {
+      postCtrl.savePost(data.message, data.user_id);
+      io.emit('RECEIVE_POST', {
+        message: data.message, 
+        user_id: data.user_id
       })
     })
 

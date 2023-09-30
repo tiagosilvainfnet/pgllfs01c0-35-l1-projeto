@@ -1,6 +1,7 @@
 import { Friend } from "../models/friend.entity";
 import { User } from "../models/user.entity";
 import { Invite } from "../models/invites.entity";
+import { Notification } from "../models/notification.entity";
 import { Op } from "sequelize";
 
 export default class FriendController{
@@ -36,24 +37,54 @@ export default class FriendController{
             })
         }
 
+        Notification.update({
+            status: 1
+        }, {
+            where: {
+                type: 'invite',
+                user_sender: data.user_id,
+                user_receptor: data.friend_id
+            }
+        })
+
         return {
             status: 200,
             result: {}
         }
     }
 
-    async searchFriend(query: String){
+    async searchFriend(query: String, id: Number){
+        const ids = [Number(id)]
+
+        const friends = await Friend.findAll({
+            where: {
+                user_id: Number(id)
+            }
+        })
+        for(const friend of friends){
+            ids.push(Number(friend.friend_id))
+        }
+
         const users = await User.findAll({
             where: {
-                [Op.or]: [
+                [Op.and]: [
                     {
-                        name: {
-                            [Op.like]: `%${query}%`
-                        }
+                        [Op.or]: [
+                            {
+                                name: {
+                                    [Op.like]: `%${query}%`
+                                }
+                            },
+                            {
+                                email: {
+                                    [Op.like]: `%${query}%`
+                                }
+                            }
+                        ]
                     },
                     {
-                        email: {
-                            [Op.like]: `%${query}%`
+                        id: {
+                            [Op.notIn]: ids
                         }
                     }
                 ]

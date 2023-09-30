@@ -42,9 +42,21 @@
             </div>
         </div>
         </nav>
+
+    <audio id="myAudio" autoplay>
+        <source src="/audio/notification.mp3" type="audio/mpeg">
+        Seu navegador não suporta o elemento de vídeo.
+    </audio>
     <div class="container">
         <div class="row">
             <div class="col col-md-8">
+                <div class="mb-3 mt-4" style="margin-top: 80px !important">
+                    <label for="postagem" class="form-label">Postagem</label>
+                    <textarea class="form-control" id="postagem" rows="3"></textarea>
+                    <button type="button" class="btn btn-primary mt-2" onclick="postar()">Postar</button>
+                </div>
+                <div id="postagens"></div>
+
                 <div id="chat_window" class="chat_window" style="display: none;">
                     <div class="top_menu">
                         <div class="buttons">

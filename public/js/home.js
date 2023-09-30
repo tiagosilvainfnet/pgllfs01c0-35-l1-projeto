@@ -24,6 +24,9 @@ const datalistOptions = document.getElementById('datalistOptions');
 const search = document.getElementById('search');
 const notification = document.getElementById('notification');
 const notifcationBadge = document.getElementById('notifcation-badge');
+const audio = document.getElementById("myAudio"); 
+const postagens = document.getElementById('postagens');
+const friends = []
 let friend = {};
 
 const socket = io();
@@ -37,24 +40,26 @@ const getNotifcations = async () => {
         }
     })
     const json = await response.json();
-    for(const notification of json.result){
+    for(const _notification of json.notifications){
         let li = ''
-        const res = await getUserFriend(notification.user_sender);
+        const res = await getUserFriend(_notification.user_sender);
         const name = res.name;
 
-        if(notification.type === 'invite'){
-            li = `<li><button class="dropdown-item" onclick="openModal(this, ${notification.user_sender}, ${notification.user_receptor})">Solicitação de amizade de ${name}</button></li>`
+        if(_notification.type === 'invite'){
+            li = `<li><button class="dropdown-item" onclick="openModal(this, ${_notification.user_sender}, ${_notification.user_receptor})">Solicitação de amizade de ${name}</button></li>`
         }else{
-            li = `<li><button class="dropdown-item" onclick=""loadChat(${notification.id}, ${data.user_sender}, null)"">Mensagem de ${name}</button></li>`
+            li = `<li><button class="dropdown-item" onclick="loadChat(${_notification.user_receptor}, ${_notification.user_sender}, '${name}', 'chat')">Mensagem de ${name}</button></li>`
         }
 
         let chidrens = document.getElementById('notification').children;
+
         if(chidrens.length > 0){
             chidrens[chidrens.length - 1].insertAdjacentHTML('afterend', li);
         }else{
             notification.innerHTML = li;
         }
     }
+    await verifyNotifications();
 }
 
 const verifyNotifications = () => {
@@ -78,7 +83,7 @@ const getUserFriend = async (id) => {
     return json.result;
 }
 
-const loadChat = async (user_id, friend_id, friend_name) => {
+const loadChat = async (user_id, friend_id, friend_name, type) => {
     if(friend_name === null){
         const res = await getUserFriend(friend_id);
         friend_name = res.name;
@@ -112,7 +117,23 @@ const loadChat = async (user_id, friend_id, friend_name) => {
     messages.innerHTML = lis;
     document.getElementsByClassName('messages')[0].scrollTop = document.getElementsByClassName('messages')[0].scrollHeight;
     chat_window.style.display = 'block';
-    verifyNotifications();
+    if(type){
+        await fetch(`${window.location.origin}/notifications`, {
+            method: 'PATCH',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                status: 1,
+                user_sender: friend_id,
+                user_receptor: user_id,
+                type
+            })
+        })
+        notification.innerHTML = '';
+    }
+    await verifyNotifications();
 }
 
 closeChat = () => {
@@ -139,7 +160,8 @@ const getFriends = async () => {
     let lis = ''
 
     for(const friend of json.result){
-        lis += `<li onclick="loadChat(${user.id}, ${friend.id}, '${friend.name}')" class="list-group-item">${friend.name}</li>`
+        lis += `<li onclick="loadChat(${user.id}, ${friend.id}, '${friend.name}', 'chat')" class="list-group-item">${friend.name}</li>`
+        friends.push(friend.id);
     }
 
     document.getElementById('friends').innerHTML = lis;
@@ -178,7 +200,7 @@ document.getElementById('form-chat').addEventListener('submit', function(event) 
 
 const searchUser = async (element) => {
     if(element.value.length > 4){
-        const response = await fetch(`http://localhost:3000/search?q=${encodeURIComponent(element.value)}`, {
+        const response = await fetch(`http://localhost:3000/search?q=${encodeURIComponent(element.value)}&id=${user.id}`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
@@ -249,7 +271,7 @@ const changeInvite = async (user_sender, user_receptor, status) => {
     }
 }
 
-const openModal = (element, user_sender, user_receptor) => {
+const openModal = async (element, user_sender, user_receptor) => {
     const confirm = window.confirm("Aceitar solicitação de amizade?");
     if(confirm){
         changeInvite(user_sender, user_receptor, 1);
@@ -257,12 +279,12 @@ const openModal = (element, user_sender, user_receptor) => {
         changeInvite(user_sender, user_receptor, 0);
     }
     element.remove();
-    verifyNotifications();
+    await verifyNotifications();
 }
 
 const updateChat = async (friend_id) => {
     const friend = await getUserFriend(friend_id);
-    const li = `<li onclick="loadChat(${user.id}, ${friend.id}, '${friend.name}')" class="list-group-item">${friend.name}</li>`;
+    const li = `<li onclick="loadChat(${user.id}, ${friend.id}, '${friend.name}', 'chat')" class="list-group-item">${friend.name}</li>`;
 
     const lis = document.getElementById('friends').children;
     if(lis.length > 0){
@@ -291,7 +313,17 @@ const ouvirMessage = () => {
         }
     });
 
+    socket.on('RECEIVE_POST', async function(data){
+        if(friends.includes(data.user_id)){
+            const res = await getUserFriend(data.user_id);
+            const friend_name = res.username;
+            addPostagem(friend_name, data.message);
+        }
+    })
+
     socket.on('RECEIVE_NOTIFICATION', async function(data){
+        audio.play();
+
         if(data.user_sender !== user.id && data.user_receptor === user.id){
             notifcationBadge.style.display = 'block';
             const res = await getUserFriend(data.user_sender);
@@ -302,7 +334,7 @@ const ouvirMessage = () => {
             if(data.type === 'invite'){
                 li = `<li><button class="dropdown-item" onclick="openModal(this, ${data.user_sender}, ${data.user_receptor})">Solicitação de amizade de ${name}</button></li>`
             }else{
-                li = `<li><button class="dropdown-item" onclick=""loadChat(${user.id}, ${data.user_sender}, null)"">Mensagem de ${name}</button></li>`
+                li = `<li><button class="dropdown-item" onclick=""loadChat(${user.id}, ${data.user_sender}, ${name}, 'chat')"">Mensagem de ${name}</button></li>`
             }
             let chidrens = document.getElementById('notification').children;
             if(chidrens.length > 0){
@@ -314,10 +346,49 @@ const ouvirMessage = () => {
     });
 }
 
-// TODO: Salvar as notificações
-// TODO: Buscar somente não amigos e não eu
-// TODO: Fazer uma timeline
+const postar = async () => {
+    const message = document.getElementById('postagem').value;
+    socket.emit('SEND_POST', {
+        user_id: user.id,
+        message: message
+    });
+    addPostagem(user.username, message);
+}
 
+const addPostagem = (usuario, message) => {
+    const li = `
+        <div class="alert alert-primary" role="alert">
+            <h4>${usuario}</h4>
+            <p>${message}</p>
+        </div>
+    `;
+
+    const lis = document.getElementById('postagens').children;
+    if(lis.length > 0){
+        lis[lis.length - 1].insertAdjacentHTML('afterend', li);
+    }else{
+        postagens.innerHTML = li;
+    }
+}
+const loadPosts = async () => {
+    const response = await fetch(`${window.location.origin}/posts?user_id=${user.id}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    })
+    const json = await response.json();
+
+    json.posts.forEach(async (post) => {
+        const res = await getUserFriend(post.user_id);
+        const name = res.username;
+        addPostagem(name, post.message);
+    })
+}
+
+// TODO: Fazer uma timeline
 ouvirMessage();
 getFriends();
 getNotifcations();
+loadPosts();
