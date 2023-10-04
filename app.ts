@@ -28,6 +28,7 @@ import { Chat } from './models/chat.entity';
 import { Notification } from './models/notification.entity';
 import { Post } from './models/post.entity';
 import PostController from './controllers/PostController';
+const fileUpload = require('express-fileupload');
 
 const notificatioCtrl = new NotificationController();
 const postCtrl = new PostController();
@@ -35,6 +36,7 @@ const postCtrl = new PostController();
 const path = require('node:path');
 const mysqlStore = require('express-mysql-session')(session);
 require('dotenv').config();
+const cors = require('cors');
 
 AdminJS.registerAdapter({
   Resource: AdminJSSequelize.Resource,
@@ -57,6 +59,7 @@ const start = async () => {
   const app = express()
   const server = http.createServer(app);
   const io = new Server<SocketDataChat>(server);
+  app.locals.io = io;
 
   sequelize.sync().then((result) => {
     console.log(result);
@@ -154,10 +157,13 @@ const start = async () => {
   )
   hbs.registerPartials(path.join(ROOT_DIR, 'views'));
   app.set('view engine', '.hbs');
+  app.use(fileUpload());
   app.use(express.static('public'));
   app.use(admin.options.rootPath, adminRouter)
-  app.use(express.json())
-  app.use(bodyParser.urlencoded({ extended: true }));
+  app.use(express.json({ limit: '10mb'}))
+  app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+  app.use(cors());
+
   app.use('/dashboard', dashboard);
   app.use('/', auth);
   app.use('/', home);
@@ -187,14 +193,6 @@ const start = async () => {
         user_sender: data.user_id,
         user_receptor: data.friend_id,
         type: data.type
-      })
-    })
-
-    socket.on('SEND_POST', (data) => {
-      postCtrl.savePost(data.message, data.user_id);
-      io.emit('RECEIVE_POST', {
-        message: data.message, 
-        user_id: data.user_id
       })
     })
 

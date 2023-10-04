@@ -23,10 +23,11 @@ export default class PostController{
         }
     }
 
-    savePost(message: string, user_id: Number){
+    savePost(message: string, user_id: Number, image: string){
         Post.create({
             message: message,
-            user_id: Number(user_id)
+            user_id: Number(user_id),
+            image: image
         })
 
         return {

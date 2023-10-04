@@ -53,6 +53,11 @@
                 <div class="mb-3 mt-4" style="margin-top: 80px !important">
                     <label for="postagem" class="form-label">Postagem</label>
                     <textarea class="form-control" id="postagem" rows="3"></textarea>
+                    <div class="mb-3">
+                        <label for="inputImagemPost" class="form-label">Imagem</label>
+                        <input class="form-control" type="file" id="inputImagemPost">
+                    </div>
+                    <button type="button" class="btn btn-danger mt-2" onclick="clearImage()">Remover imagem</button>
                     <button type="button" class="btn btn-primary mt-2" onclick="postar()">Postar</button>
                 </div>
                 <div id="postagens"></div>

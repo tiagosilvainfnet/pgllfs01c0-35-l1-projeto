@@ -26,6 +26,7 @@ const notification = document.getElementById('notification');
 const notifcationBadge = document.getElementById('notifcation-badge');
 const audio = document.getElementById("myAudio"); 
 const postagens = document.getElementById('postagens');
+const inputImagemPost = document.getElementById('inputImagemPost');
 const friends = []
 let friend = {};
 
@@ -314,10 +315,12 @@ const ouvirMessage = () => {
     });
 
     socket.on('RECEIVE_POST', async function(data){
-        if(friends.includes(data.user_id)){
+        if(friends.includes(data.user_id) || data.user_id === user.id){
             const res = await getUserFriend(data.user_id);
             const friend_name = res.username;
-            addPostagem(friend_name, data.message);
+
+            console.log(data)
+            addPostagem(friend_name, data.message, data.image);
         }
     })
 
@@ -346,20 +349,63 @@ const ouvirMessage = () => {
     });
 }
 
-const postar = async () => {
-    const message = document.getElementById('postagem').value;
-    socket.emit('SEND_POST', {
-        user_id: user.id,
-        message: message
-    });
-    addPostagem(user.username, message);
+const clearImage = () => {
+    inputImagemPost.value = '';
 }
 
-const addPostagem = (usuario, message) => {
+const readFileAsDataURL = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+  
+      reader.onloadend = function () {
+        resolve(reader.result);
+      };
+  
+      reader.onerror = function (error) {
+        reject(error);
+      };
+  
+      reader.readAsDataURL(file);
+    });
+};
+
+const postar = async () => {
+    const headers = new Headers();
+    headers.append('Accept', 'application/json');
+    headers.append('Content-Type', 'application/json');
+
+    try{
+        let image = null;
+        const message = document.getElementById('postagem').value;
+        if(inputImagemPost.files.length > 0){
+            const file = inputImagemPost.files[0];
+            if (file.type === 'image/png' || file.type === 'image/jpeg') {
+                image = await readFileAsDataURL(file);
+            } else {
+                alert('O arquivo deve ser uma imagem PNG ou JPEG')
+            }
+        }
+        
+        await fetch(`${window.location.origin}/posts`, {
+            method: 'POST',
+            body: JSON.stringify({
+                user_id: user.id,
+                message: message,
+                image: image
+            }),
+            headers: headers
+        });  
+    }catch(e){
+        alert(e)
+    }
+}
+
+const addPostagem = (usuario, message, image) => {
     const li = `
         <div class="alert alert-primary" role="alert">
             <h4>${usuario}</h4>
             <p>${message}</p>
+            <img style="width: 100%;" src="${image}" alt=""/>
         </div>
     `;
 
@@ -383,7 +429,7 @@ const loadPosts = async () => {
     json.posts.forEach(async (post) => {
         const res = await getUserFriend(post.user_id);
         const name = res.username;
-        addPostagem(name, post.message);
+        addPostagem(name, post.message, post.image);
     })
 }
 
